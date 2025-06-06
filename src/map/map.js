@@ -3,7 +3,7 @@ import Leaflet from 'leaflet';
 import { Map, TileLayer } from 'react-leaflet'
 import Markerdisplay from './marker';
 import 'leaflet/dist/leaflet.css';
-import { alert, force, input, select } from 'notie'
+import { input, select } from 'notie'
 import axios from 'axios';
 import config from '../config';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
@@ -31,31 +31,32 @@ class Mapdisplay extends Component {
             lng: 77.077524,
             zoom: 4,
             name: '',
+            notes: '',
+            markerType: 'hive',
+            photo: '',
             users: props.users
         }
     }
 
 
-    getLocation(name, message,safe) {
-
+    getLocation(name, notes, markerType, photo) {
         var options = {
             enableHighAccuracy: true,
             timeout: 10000,
             maximumAge: 0
         };
         navigator.geolocation.getCurrentPosition((pos) => {
-            this.setState({ lat: pos.coords.latitude, lng: pos.coords.longitude, name: name, message: message ,safe:safe});
+            this.setState({ lat: pos.coords.latitude, lng: pos.coords.longitude, name, notes, markerType, photo });
             this.addUser();
-
-
         }, (err) => JSON.stringify(err), options);
     }
     addUser() {
 
         let user = {
             name: this.state.name,
-            message: this.state.message,
-            safe: this.state.safe,
+            notes: this.state.notes,
+            markerType: this.state.markerType,
+            photo: this.state.photo,
             location: {
                 lat: this.state.lat, lng: this.state.lng
             }
@@ -71,107 +72,47 @@ class Mapdisplay extends Component {
 
     }
     componentDidMount() {
-     this.UserInput();
-
+        this.MarkerInput();
     }
 
     loadUsers(users) {
         if (users.length > 0) {
             var marker = users.map(e => {
-                return <Markerdisplay key={e.name + e.location.location + e.location.message} position={[e.location.latitude,e.location.location]} name={e.name} message={e.message} safe={e.safe} />
+                return <Markerdisplay key={e.name + e.location.lat + e.location.lng + (e.notes || '')} position={[e.location.lat, e.location.lng]} name={e.name} notes={e.notes} markerType={e.markerType} photo={e.photo} />
             })
-
             return marker;
-
         }
         return;
 
 
     }
 
-    UserInput(){
-        setTimeout(() => {
-            force({
-                type: 'success',
-                text: `<b>Hope, You are safe ! 😀 <b>`,
-                position: 'bottom',
+    MarkerInput() {
+        input({
+            text: "Name", submitCallback: (nameValue) => {
+                select({
+                    text: 'Select marker type:',
+                    choices: [
+                        { type: 1, text: 'Hive', handler: () => this._handleMarkerType(nameValue, 'hive') },
+                        { type: 2, text: 'Swarm', handler: () => this._handleMarkerType(nameValue, 'swarm') },
+                        { type: 3, text: 'Tree', handler: () => this._handleMarkerType(nameValue, 'tree') },
+                        { type: 4, text: 'Structure', handler: () => this._handleMarkerType(nameValue, 'structure') },
+                    ]
+                });
+            }
+        })
+    }
 
-                callback: () => {
-                    force({
-                        type: 3,  position: 'bottom',text: '<b>Please, Help us to mark  📍 you as SAFE.🙌<b><br>That`s a bold move...',
-                        callback: () => {
-                            select({
-                                text: 'Let us know 😄 where are you ?',
-
-                                choices: [
-                                    {
-                                        type: 1,
-                                        text: 'Safe at Your Home 🏠',
-                                        handler: () => {
-                                            force({
-                                                type: 'success', text: 'Great ! Be safe. 🙌', callback: () => {
-                                                    input({
-                                                        text: "Your Name 🙆 🙇", submitCallback: (value) => {
-
-                                                            //  this.setState({name:value})
-                                                            input({
-                                                                text: "Your 💬 Message to World 🌏", type: 2, submitCallback: (message) => {
-                                                                    //  this.setState({message:message})
-                                                                    force({
-                                                                        text: `Now please share your location with us , <B> ${value}<b>`, callback: () => {
-
-                                                                            this.getLocation(value, message,true);
-                                                                            alert({text:"Great, thanks for Helping us. 😄"})
-                                                                
-
-                                                                        }
-                                                                    })
-                                                                }
-                                                            })
-                                                        }
-                                                    })
-                                                }
-                                            })
-                                        }
-                                    },
-                                    {
-                                        type: 3,
-                                        text: 'Stucked Somewhere 🌏 ',
-                                        handler:  ()=> {
-                                            force({
-                                                type: 3, text: 'No Worries 🙅 🙇 !', callback: () => {
-                                                    input({
-                                                        text: "Your Name", submitCallback: (value) => {
-
-                                                            //  this.setState({name:value})
-                                                            input({
-                                                                text: "Your Message 💬 to World 🌏", type: 2, submitCallback: (message) => {
-                                                                    //  this.setState({message:message})
-                                                                    force({
-                                                                        text: `Now please share your location 📍 with us, <b>${value}</b>`, callback: () => {
-
-                                                                            this.getLocation(value, message,false);
-                                                                            alert({text:"Great, thanks for Helping us. 😄"})
-                                                                        }
-                                                                    })
-                                                                }
-                                                            })
-                                                        }
-
-                                                    })
-                                                }
-                                            })
-                                        }
-                                    }]
-
-
-                            })
-                        }
-
-                    })
-                }
-            });
-        }, 2000);
+    _handleMarkerType(nameValue, markerType) {
+        input({
+            text: "Notes (optional)", type: 2, submitCallback: (notesValue) => {
+                input({
+                    text: "Photo URL (optional)", type: 2, submitCallback: (photoValue) => {
+                        this.getLocation(nameValue, notesValue, markerType, photoValue);
+                    }
+                })
+            }
+        })
     }
 
 
@@ -180,10 +121,10 @@ class Mapdisplay extends Component {
         return (
             <Map center={position} zoom={this.state.zoom} style={{ height: '450px' }}>
                 <TileLayer
-                    attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                    attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {this.state.name !== '' ? <Markerdisplay position={[this.state.lat, this.state.lng]} name={this.state.name} safe={this.state.safe}/> : ''}
+                {this.state.name !== '' ? <Markerdisplay position={[this.state.lat, this.state.lng]} name={this.state.name} notes={this.state.notes} markerType={this.state.markerType} photo={this.state.photo} /> : ''}
                 {this.loadUsers(this.state.users)}
             </Map>
         )

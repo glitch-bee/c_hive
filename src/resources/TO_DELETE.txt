@@ -1,0 +1,14 @@
+Remove the following files as they are not needed for the new marker system:
+- src/resources/loader/loader1.json
+- src/resources/loader/loader2.json
+- src/resources/loader/loader3.json
+- src/resources/loader/loader4.json
+- src/resources/loader/loader5.json
+- src/resources/loader/loader6.json
+- src/resources/loader/loader7.json
+- src/resources/notsafe.png
+- src/resources/safe.png
+- src/resources/virus.png
+- src/font/Sen-Bold.ttf
+- src/helper/sharer.js
+- public/Screenshot from 2020-05-26 14-16-39.jpg
